@@ -6,12 +6,10 @@ import java.awt.event.ActionListener;
 
 public class GUI implements ActionListener{
     private JFrame frame;
-    private JPanel panel;
-    private JPanel panel1;
-    private GridLayout grid;
+    private JPanel mainPanel;
+    private JPanel controlPanel;
 
     private boolean playerOne = true;
-    private boolean playerTwo = false;
 
     private JButton[][] buttonGrid;
     private JButton replay;
@@ -20,148 +18,142 @@ public class GUI implements ActionListener{
 
     public GUI(){
         frame = new JFrame();
-        panel = new JPanel();
-        panel1 = new JPanel();
+        mainPanel = new JPanel();
+        controlPanel = new JPanel();
         buttonGrid = new JButton[numRows][numCols];
 
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
+        mainPanel.setLayout(new GridLayout(3, 3));
+        mainPanel.setSize(300, 300);        
+
+        initializeButtons();
+        setUpFrame();
+    }
+
+    public void initializeButtons(){
         for(int i=0; i<numRows; i++){
             for(int j=0; j<numCols; j++){
                 buttonGrid[i][j] = new JButton("");
                 buttonGrid[i][j].setBackground(Color.WHITE);
-
-                panel.add(buttonGrid[i][j]);
+                buttonGrid[i][j].setFont(new Font("Arial", Font.BOLD, 40));
+                buttonGrid[i][j].setFocusPainted(false);
                 buttonGrid[i][j].addActionListener(this);
+                mainPanel.add(buttonGrid[i][j]);
             }
         }
 
-        grid = new GridLayout(3, 3);
-
-        panel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
-        panel.setLayout(grid);
-        panel.setSize(300, 300);
-
-        panel1.setBorder(BorderFactory.createEmptyBorder());
         replay= new JButton("Play again.");
-        panel1.add(replay);
         replay.addActionListener(this);
+        controlPanel.add(replay);
+    }
 
-        frame.add(panel, BorderLayout.CENTER); //add panel to frame
-        frame.add(panel1, BorderLayout.SOUTH);
+    public void setUpFrame(){
+        frame.add(mainPanel, BorderLayout.CENTER); //add panel to frame
+        frame.add(controlPanel, BorderLayout.SOUTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //on frame close
         frame.setTitle("My GUI");
         frame.pack();
         frame.setVisible(true);
-
-    }
-
-    public static void main(String[] args) {
-        new GUI();
+        frame.setSize(500, 500);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == replay){
-            for(int i=0; i<numRows; i++){
-                for(int j=0; j<numCols; j++){
-                    buttonGrid[i][j].setText("");
-                }
-            }
-
+            resetGrid();
             playerOne = true;
-            playerTwo = false;
         }
 
         if(playerOne && e.getSource() != replay){
             //set Button text to X
             JButton buttonClicked = (JButton)e.getSource();
-            buttonClicked.setText("X");
-            playerOne = false;
-            playerTwo = true;
+            if(!buttonClicked.getText().equals("")){
+                JOptionPane.showMessageDialog(frame, "Cell already played in.");
+            }
+            else{
+                buttonClicked.setText("X");
+                buttonClicked.setForeground(Color.RED);
+                playerOne = false;
+            }
         }
 
-        else if(playerTwo && e.getSource() != replay){
+        else if(!playerOne && e.getSource() != replay){
             //set Button to O
             JButton buttonClicked = (JButton)e.getSource();
-            buttonClicked.setText("O");
-            playerTwo = false;
-            playerOne = true;
+            if(!buttonClicked.getText().equals("")){
+                JOptionPane.showMessageDialog(frame, "Cell already played in.");
+            }
+            else{
+                buttonClicked.setText("O");
+                buttonClicked.setForeground(Color.BLUE);
+                playerOne = true;
+            }
         }
 
         String winner = checkGrid();
-        if(winner.equals("P1")){
-            System.out.println("P1 wins.");
+        if(winner.equals("X")){
+            JOptionPane.showMessageDialog(frame, "Player One wins.");
+            resetGrid();
+            playerOne= true;
         }
-        else if(winner.equals("P2")){
-            System.out.println("P2 wins.");
+        else if(winner.equals("O")){
+            JOptionPane.showMessageDialog(frame, "Player Two wins.");
+            resetGrid();
+            playerOne = true;
+        }
+        else if(winner.equals("Draw")){
+            JOptionPane.showMessageDialog(frame, "It's a draw!");
+            resetGrid();
+            playerOne = true;
         }
     }
 
     public String checkGrid(){
-        int countVerticalX = 0;
-        int countVerticalO = 0;
-        int countHorizontalX = 0;
-        int countHorizontalO = 0;
-        int countDiagonalX = 0;
-        int countDiagonalO = 0;
-
-        //check horizontal rows
-        for(int i=0; i<numRows; i++){
-            countHorizontalX = 0; //reset counts
-            countHorizontalO = 0;
-            for(int j=0; j<numCols; j++){
-                if(buttonGrid[i][j].getText().equals("X")){
-                    countHorizontalX++;
-                    if(countHorizontalX == 3){
-                        return "P1";
-                    }
-                }
-                else if(buttonGrid[i][j].getText().equals("O")){
-                    countHorizontalO++;
-                    if(countHorizontalO == 3){
-                        return "P2";
-                    }
-                }
+        if(isGridFull()){
+            return "Draw";
+        }
+        //check vertical and horizontal rows
+        for(int i = 0; i<3; i++){
+            if(buttonGrid[i][0].getText().equals(buttonGrid[i][1].getText()) && buttonGrid[i][1].getText().equals(buttonGrid[i][2].getText()) && buttonGrid[i][0].getText().equals(buttonGrid[i][2].getText())){
+                return buttonGrid[i][0].getText();
+            }
+            else if(buttonGrid[0][i].getText().equals(buttonGrid[1][i].getText()) && buttonGrid[1][i].getText().equals(buttonGrid[2][i].getText()) && buttonGrid[0][i].getText().equals(buttonGrid[2][i].getText())){
+                return buttonGrid[0][i].getText();
             }
         }
 
-        //check vertical rows
-        for(int i=0; i<numRows; i++){
-            countVerticalX = 0;
-            countVerticalO = 0;
-            for(int j=0; j<numCols; j++){
-                if(buttonGrid[j][i].getText().equals("X")){
-                    countVerticalX++;
-                    if(countVerticalX == 3){
-                        return "P1";
-                    }
-                }
-                else if(buttonGrid[j][i].getText().equals("O")){
-                    countVerticalO++;
-                    if(countVerticalO == 3){
-                        return "P2";
-                    }
-                }
-            }
+        //check diagonals
+        if(buttonGrid[0][0].getText().equals(buttonGrid[1][1].getText()) && buttonGrid[1][1].getText().equals(buttonGrid[2][2].getText()) && buttonGrid[0][0].getText().equals(buttonGrid[2][2].getText())){
+            return buttonGrid[0][0].getText();
         }
-
-        //check diagonal rows
-        for(int i=0; i<numRows; i++){
-            for(int j=0; j<numCols; j++){
-                if(i==j && buttonGrid[j][i].getText().equals("X")){
-                    countDiagonalX++;
-                    if(countDiagonalX == 3){
-                        return "P1";
-                    }
-                }
-                else if(i==j && buttonGrid[j][i].getText().equals("O")){
-                    countDiagonalO++;
-                    if(countDiagonalO == 3){
-                        return "P2";
-                    }
-                }
-            }
+        else if(buttonGrid[0][2].getText().equals(buttonGrid[1][1].getText()) && buttonGrid[1][1].getText().equals(buttonGrid[2][0].getText()) && buttonGrid[0][2].getText().equals(buttonGrid[2][0].getText())){
+            return buttonGrid[0][2].getText();
         }
 
         return "";
+    }
+
+    public boolean isGridFull(){
+        for(int i=0; i<numRows; i++){
+            for(int j=0; j<numCols; j++){
+                if(buttonGrid[i][j].getText().equals("")){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public void resetGrid(){
+        for(int i=0; i<numRows; i++){
+            for(int j=0; j<numCols; j++){
+                buttonGrid[i][j].setText("");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        new GUI();
     }
 }
